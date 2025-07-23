@@ -5,17 +5,17 @@
 import feedparser
 from datetime import datetime, timedelta
 import time
+import re
 
 # --- CONFIGURATION ---
 RSS_BASE = "https://news.google.com/rss/search?q={query}&hl=en&gl=US&ceid=US:en"
-TOP_COMPANIES = ["Wilmar", "Dinant", "musim mas", "cargill", "astra agro lestari"]
-NGO = ["Mongabay", "Reuters", "mighty earth", "greenpeace"]
 
-ISSUES = [
-    "deforestation", "conflict", "corruption", "human right","abuse",
-    "indigenous", "labor", "fire", "pollution", "land dispute"]
+TOP_COMPANIES = ["Wilmar", "Dinant", "Musim Mas",  "Astra Agro Lestari"]
+NGO = ["Mongabay", "Reuters", "Mighty Earth", "Greenpeace", "Rainforest Action Network"]
+ISSUES = [ "deforestation", "conflict", "corruption", "human rights", "indigenous", "labor right", "fire", "pollution", "land dispute" ]
 
 DAYS_LIMIT = 7
+
 # --- FUNCTIONS ---
 def fetch_news(query):
     url = RSS_BASE.format(query=query.replace(" ", "+"))
@@ -26,6 +26,28 @@ def is_recent(entry, days=DAYS_LIMIT):
         pub_date = datetime.fromtimestamp(time.mktime(entry.published_parsed))
         return pub_date >= datetime.now() - timedelta(days=days)
     return False
+
+def normalize_title(title):
+    words = re.findall(r'\w+', title.lower())
+    return set(words)
+
+def is_similar(title1, title2, min_common=3):
+    words1 = normalize_title(title1)
+    words2 = normalize_title(title2)
+    common = words1 & words2
+    return len(common) >= min_common
+
+def deduplicate(results):
+    unique = []
+    for r in results:
+        duplicate_found = False
+        for u in unique:
+            if is_similar(r["title"], u["title"], min_common=4):
+                duplicate_found = True
+                break
+        if not duplicate_found:
+            unique.append(r)
+    return unique
 
 def search_and_collect(queries, label):
     results = []
@@ -40,17 +62,8 @@ def search_and_collect(queries, label):
                     "published": e.get("published", "Unknown"),
                     "query": q
                 })
-        time.sleep(1)  # avoid too many requests
+        time.sleep(1)  # avoid overloading Google News
     return results
-
-def deduplicate(results):
-    seen = set()
-    unique = []
-    for r in results:
-        if r["url"] not in seen:
-            seen.add(r["url"])
-            unique.append(r)
-    return unique
 
 # --- MAIN WORKFLOW ---
 def main():
@@ -64,14 +77,13 @@ def main():
     company_queries = [f"{company} {issue}" for company in TOP_COMPANIES for issue in ISSUES]
     all_results.extend(search_and_collect(company_queries, "company_issue"))
 
-     # Pass 3: Palm oil + + issue + NGO
+    # Pass 3: Palm oil + issue + NGO
     ngo_queries = [f"palm oil {issue} {ngo}" for issue in ISSUES for ngo in NGO]
     all_results.extend(search_and_collect(ngo_queries, "palm_ngo"))
-  
 
-    # Deduplicate and print results
+    # Deduplicate based on URL and title similarity
     final_results = deduplicate(all_results)
-    print(f"\n✅ Found {len(final_results)} unique relevant articles in last {DAYS_LIMIT} days.\n")
+    print(f"\n✅ Found {len(final_results)} unique articles in the last {DAYS_LIMIT} days.\n")
 
     for idx, r in enumerate(final_results, 1):
         print(f"[{idx}] {r['title']}")
