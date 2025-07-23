@@ -1,0 +1,40 @@
+{
+ "model": "sonar-pro",
+  "stream": false,
+  "max_tokens": 1024,
+  "temperature": 0,
+  "response_format": { 
+    "type": "json_schema", 
+    "json_schema": {
+      "schema": {
+        "type": "object", 
+        "properties": {
+          "items": {"type": "array", 
+            "items": {"type": "object", "properties": 
+              {
+                "title": {"type": "string"}, 
+                "summary": {"type": "string"}, 
+                "keywords": {"type": "string"}, 
+                "companies": {"type": "string"}, 
+                "date_published": {"type": "string"}, 
+                "source_url": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "required": ["items"]
+      }
+    },
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a news monitor that returns strict JSON only."
+    },
+    {
+      "role": "user",
+      "content": "List the latest news concerning legal actions, corruption, deforestation, labor or human-rights accusations involving palm oil companies. For each distinct article return an object with: title, summary (≤120 words), keywords (comma-separated), companies (comma-separated tickers or names), date published, and source url. Please continue searching until you find at least 10 results, if possible. Return an array called \"items\"  nothing else. Example: { \"items\": [ { \"title\": \"Title\", \"summary\": \"Summary\", \"keywords\": \"keyword1,keyword2\", \"companies\": \"company1,company2\", \"date_published\": \"2025-01-01\", \"source_url\": \"https://example.com\" } ] }"
+    }
+  ],
+  "search_after_date_filter": "{{ $now.minus({ days: 3 }).toFormat('M/d/yyyy') }}"
+}
