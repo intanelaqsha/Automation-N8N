@@ -1,3 +1,7 @@
+POST https://api.perplexity.ai/chat/completions
+Authorization: Bearer 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
+Content-Type: application/json
+
 {
  "model": "sonar-pro",
   "stream": false,
@@ -33,8 +37,8 @@
     },
     {
       "role": "user",
-      "content": "Has the company Ocho Sur had any issues related to labor disputes? Find relevant news articles and return the results in JSON format. Return an array called \"items\"  nothing else. Example: { \"items\": [ { \"title\": \"Title\", \"summary\": \"Summary\", \"keywords\": \"keyword1,keyword2\", \"companies\": \"company1,company2\", \"date_published\": \"2025-01-01\", \"source_url\": \"https://example.com\" } ] }"
+      "content": "Has the company Ocho Sur had any issues related to labor dispute? Find relevant news articles and return the results in JSON format. Return an array called \"items\"  nothing else. Example: { \"items\": [ { \"title\": \"Title\", \"summary\": \"Summary\", \"keywords\": \"keyword1,keyword2\", \"companies\": \"company1,company2\", \"date_published\": \"01-01-2025\", \"source_url\": \"https://example.com\" } ] }"
     }
   ],
-  "search_after_date_filter": "{{ $now.minus({ days: 3 }).toFormat('M/d/yyyy') }}"
+  "search_after_date_filter": "07/24/2024"
 }
