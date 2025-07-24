@@ -1,5 +1,5 @@
 POST https://api.perplexity.ai/chat/completions
-Authorization: Bearer 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
+Authorization: Bearer xxx
 Content-Type: application/json
 
 {
