@@ -12,7 +12,8 @@ RSS_BASE = "https://news.google.com/rss/search?q={query}&hl=en&gl=US&ceid=US:en"
 
 TOP_COMPANIES = ["Wilmar", "Dinant", "Musim Mas",  "Astra Agro Lestari"]
 NGO = ["Mongabay", "Reuters", "Mighty Earth", "Greenpeace", "Rainforest Action Network"]
-ISSUES = [ "deforestation", "conflict", "corruption", "human rights", "indigenous", "labor right", "fire", "pollution", "land dispute" ]
+ISSUES = [ "deforestation", "conflict", "corruption", "human rights", "indigenous", 
+          "labor right", "fire", "pollution", "land dispute" ]
 
 DAYS_LIMIT = 7
 
