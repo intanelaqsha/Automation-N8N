@@ -1,0 +1,206 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -992,
+        -64
+      ],
+      "id": "b8c648c5-b24f-4cac-bafb-e0bd14871f05",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "=https://news.google.com/rss/search?q={{$json[\"query\"]}}&hl=en&gl=US&ceid=US:en",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        -64
+      ],
+      "id": "5cde13a6-2cb6-434e-bce2-573329b31dee",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "jsCode": "const companies = [\"Wilmar\", \"Dinant\", \"Musim Mas\", \"Astra Agro Lestari\"];\nconst ngos = [\"Mongabay\", \"Reuters\", \"Mighty Earth\", \"Greenpeace\", \"Rainforest Action Network\"];\nconst issues = [\"deforestation\", \"conflict\", \"corruption\", \"human rights\", \"indigenous\", \"labor right\", \"fire\", \"pollution\", \"land dispute\"];\nconst countries = [\"Malaysia\", \"Honduras\", \"Liberia\", \"Colombia\", \"Thailand\", \"Cameroon\"];\n\nconst queries = [];\n\n// Palm oil + issue\nfor (const issue of issues) {\n  queries.push({ query: `palm oil ${issue}`, label: \"palm_issue\" });\n}\n\n// Company + issue\nfor (const company of companies) {\n  for (const issue of issues) {\n    queries.push({ query: `${company} ${issue}`, label: \"company_issue\" });\n  }\n}\n\n// Palm oil + issue + NGO\nfor (const issue of issues) {\n  for (const ngo of ngos) {\n    queries.push({ query: `palm oil ${issue} ${ngo}`, label: \"palm_ngo\" });\n  }\n}\n\n// Palm oil + country\nfor (const country of countries) {\n  queries.push({ query: `palm oil ${country}`, label: \"palm_country\" });\n}\n\nreturn queries.map(q => ({ json: q }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        -64
+      ],
+      "id": "f76f1aee-5cdb-4588-a010-5a38fd7ae434",
+      "name": "Const Query"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== CONFIG =====\nconst days = 7; // Ganti ke 30, 365, dll. sesuai kebutuhan\nconst cutoffDate = new Date();\ncutoffDate.setDate(cutoffDate.getDate() - days);\n\n// ===== STEP 1: Ambil semua item dari input =====\nconst newsItems = $input.all().map(item => item.json);\n\n// ===== STEP 2: Filter berita berdasarkan tanggal =====\nconst filteredNews = newsItems.filter(item => {\n  const pubDate = new Date(item.pubDate);\n  return pubDate >= cutoffDate;\n});\n\n// ===== STEP 3: Normalisasi judul =====\nconst normalizedNews = filteredNews.map(item => {\n  let cleanTitle = item.title\n    .toLowerCase()\n    .replace(/[^\\w\\s]/g, \" \") // hapus tanda baca\n    .replace(/\\s+/g, \" \") // rapikan spasi\n    .trim();\n  return { ...item, cleanTitle };\n});\n\n// ===== STEP 4: Dedup berdasarkan minimal 4 kata yang sama =====\nconst deduplicatedNews = normalizedNews.filter((item, index, self) => {\n  return index === self.findIndex(otherItem => {\n    if (item === otherItem) return true;\n    const titleWords = item.cleanTitle.split(\" \");\n    const otherWords = otherItem.cleanTitle.split(\" \");\n    const commonWords = titleWords.filter(word => otherWords.includes(word));\n    return commonWords.length >= 4;\n  });\n});\n\n// ===== STEP 5: Return hanya field yang dibutuhkan =====\nreturn deduplicatedNews.map(item => ({\n  json: {\n    title: item.title, // gunakan judul asli\n    link: item.link,\n    query: item.query || \"\", // pastikan query dipass dari node sebelumnya\n    pubDate: item.pubDate\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        -64
+      ],
+      "id": "7e177777-c7f2-4c44-b2f9-7f9afb1b97c7",
+      "name": "Filter & Dup",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "11NA6eZGKt-1hTGZaYEeQYico1KKldEOZP2SvrZ9wGKE",
+          "mode": "list",
+          "cachedResultName": "NEWS AUTOMATION",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11NA6eZGKt-1hTGZaYEeQYico1KKldEOZP2SvrZ9wGKE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11NA6eZGKt-1hTGZaYEeQYico1KKldEOZP2SvrZ9wGKE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "pubDate",
+              "displayName": "pubDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -192,
+        -64
+      ],
+      "id": "c752e272-1138-433b-a961-d79c2e0c8993",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wf0SPbqR9QhwXMWe",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Const Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Filter & Dup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Const Query": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & Dup": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b4f48cb5-a336-4325-9467-25bba0de0aca",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0156c49f644ff297f2c6bbd8d40e1533fee9117772f1cbaac30ef900bef34921"
+  },
+  "id": "ZyBFQWckTuxKKHrf",
+  "tags": []
+}
